@@ -5,7 +5,6 @@ from PyQt5.QtGui import QImage, QPixmap
 from imutils import paths
 import pickle
 import cv2
-import face_recognition
 import sqlite3
 import numpy as np
 import warnings
@@ -14,6 +13,7 @@ import datetime
 from datetime import date
 from database import Database
 from render import Render
+import api
 
 FACE_DISTANCE_THRESHOLE = 0.35
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_default.xml')
@@ -44,19 +44,17 @@ class VideoThread(QThread):
             small_frame = cv2.resize(cv_img, (0, 0), fx=0.25, fy=0.25)
             rgb_small_frame = small_frame[:, :, ::-1]
             if ret:
-                #Over ride
                 if process_this_frame:
-                    face_locations = face_recognition.face_locations(rgb_small_frame)
-                    face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+                    face_locations = api.face_locations(rgb_small_frame)
+                    face_encodings = api.face_encodings(rgb_small_frame, face_locations)
 
                     face_names = []
                     for face_encoding in face_encodings:
-                        matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-                        face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-                        # print(face_distances)
+                        matches = api.compare_faces(known_face_encodings, face_encoding)
+                        face_distances = api.face_distance(known_face_encodings, face_encoding)
                         name = "Unknown"
                         id=""
-                        face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
+                        face_distances = api.face_distance(known_face_encodings, face_encoding)
                         if(np.amin(face_distances)>FACE_DISTANCE_THRESHOLE): continue
                         best_match_index = np.argmin(face_distances)
                         if matches[best_match_index]:
